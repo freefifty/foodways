@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+  <meta charset=utf-8 />
+
+  <title>Map</title>
+
+    <!-- D3.js -->
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <!-- MAPBOX-gl -->
+    <script src='https://api.mapbox.com/mapbox-gl-js/v0.32.1/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v0.32.1/mapbox-gl.css' rel='stylesheet' /> 
+
+    <!-- LEAFLET -->
+    <!-- <script
+        src="http://cdn.leafletjs.com/leaflet-0.7/leaflet.js"></script> -->
+
+    <!-- STYLES -->
+    <link rel="stylesheet" type="text/css" href="/css/foodways/map.css">
+    <link rel="stylesheet" type="text/css" href="/css/foodways/popup.css">
+    <link rel="stylesheet" type="text/css" href="/css/foodways/marker.css">
+
+    <!-- FONTS -->
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700' rel='stylesheet'>
+
+
+</head>
+
+<body>
+
+<div class='leftbar'>
+  <div id="tweet_sidebar"  class='sidebar'>
+    <div class='heading'>
+      <h1>Tweets</h1>
+    </div>
+    <div id='tweets' class='listings'></div>
+</div>
+
+  <div id="restaurant_sidebar" class='sidebar'>
+    <div class='heading'>
+      <h1>Restaurants</h1>
+    </div>
+    <div id='restaurants' class='listings'></div>
+  </div>
+</div>
+
+
+<div id='map' class='map pad2'></div>
+
+
+<script>
+
+// This will let you use the .remove() function later on
+if (!('remove' in Element.prototype)) {
+  Element.prototype.remove = function() {
+    if (this.parentNode) {
+      this.parentNode.removeChild(this);
+    }
+  };
+}
+
+// initialize the map
+mapboxgl.accessToken = 'pk.eyJ1IjoiZXN0YW1ib2xpZXZhIiwiYSI6ImNpeXZudHB3czAwMjcyd21zcHFidjZ2eWUifQ.fMIEvI7LPrICPLuf8RJ4xA';
+
+var map = new mapboxgl.Map({
+  // container id specified in the HTML
+  container: 'map',
+  // style URL
+  style: 'mapbox://styles/mapbox/basic-v9',
+  // initial position in [long, lat] format - set to Lisbon
+  center: [-9.139135, 38.721544],
+  // initial zoom
+  zoom: 14
+});
+
+// add zoom options
+map.addControl(new mapboxgl.NavigationControl());
+
+// bound the map to LISBON ony
+map.fitBounds([
+    [
+       -9.202702, 38.691083
+    ], [
+        -9.095676, 38.779593
+    ]]);
+
+d3.csv("/data/foodways/tweets_Lisbon.csv", function(tweets)
+{
+  
+  map.on('load', function(e) {
+  // Add the data to your map as a layer
+  map.addSource('tweets', {
+    type: 'geojson',
+    data: tweets
+  });
+
+  tweets.forEach(function(marker) {
+    // Create a div element for the marker
+    var el = document.createElement('div');
+    // Add a class called 'marker' to each div
+    el.className = 'marker tweet';
+    // By default the image for your custom marker will be anchored
+    // by its top left corner. Adjust the position accordingly
+    el.style.left = '-28px';
+    el.style.top = '-46px';
+    // Create the custom markers, set their position, and add to map
+    new mapboxgl.Marker(el)
+      .setLngLat([marker.long, marker.lat])
+      .addTo(map);
+
+    // add a listener
+    el.addEventListener('click', function(e) {
+      var activeItem = document.getElementsByClassName('active');
+      // 1. Fly to the point
+      flyToFacility(marker);
+      // 2. Close all other popups and display popup for clicked store
+      createPopUp(marker, "tweets");
+      // 3. Highlight listing in sidebar (and remove highlight for all other listings)
+      e.stopPropagation();
+      if (activeItem[0]) {
+        activeItem[0].classList.remove('active');
+      }
+      var listing = document.getElementById('listing-' + i);
+      listing.classList.add('active');
+    });
+
+  });
+
+  buildLocationList(tweets, "tweets");
+
+  });
+
+});
+
+// read vegeterian/vegan listings
+var ssv = d3.dsv(";", "text/plain");
+ssv("/data/foodways/happy_cow_coordinate_listings.csv", function(restaurants) {
+  // console.log(restaurants); // should log an array of parsed values
+
+  map.on('load', function(e) {
+  // Add the data to your map as a layer
+  map.addSource('restaurants', {
+    type: 'geojson',
+    data: restaurants
+  });
+
+  restaurants.forEach(function(marker) {
+    // Create a div element for the marker
+    var el = document.createElement('div');
+    // Add a class called 'marker' to each div
+    el.className = 'marker restaurant';
+    // By default the image for your custom marker will be anchored
+    // by its top left corner. Adjust the position accordingly
+    el.style.left = '-28px';
+    el.style.top = '-46px';
+    // Create the custom markers, set their position, and add to map
+    new mapboxgl.Marker(el)
+      .setLngLat([marker.long, marker.lat])
+      .addTo(map);
+
+    // add a listener
+    el.addEventListener('click', function(e) {
+      var activeItem = document.getElementsByClassName('active');
+      // 1. Fly to the point
+      flyToFacility(marker);
+      // 2. Close all other popups and display popup for clicked store
+      createPopUp(marker, "restaurants");
+      // 3. Highlight listing in sidebar (and remove highlight for all other listings)
+      e.stopPropagation();
+      if (activeItem[0]) {
+        activeItem[0].classList.remove('active');
+      }
+      var listing = document.getElementById('listing-' + i);
+      listing.classList.add('active');
+    });
+
+  });
+
+  buildLocationList(restaurants, "restaurants");
+
+  });
+
+});
+
+// FUNCTIONS //
+
+// fuction to find the bouding box of the data
+function findBoudingBox(south, west, north, east, data){
+  for (i = 0; i < data.length; i++){
+    d = data[i];
+    var lng = parseFloat(d.long);
+    var lat = parseFloat(d.lat);
+    if(lng < south && lng !== ""){
+      south = lng;
+    }
+    if(lng > north && lng !== ""){
+      north = lng;
+    }
+    if(lat < west && lat !== ""){
+      west = lat;
+    }
+    if(lat > east && lat !== ""){
+      east = lat;
+    }
+  }
+  return [south, west, north, east];
+}
+
+// function to iterate over all locations
+function buildLocationList(data, id) {
+  // Iterate through the list of stores
+  for (i = 0; i < data.length; i++) {
+    var currentFeature = data[i];
+    // Select the listing container in the HTML and append a div
+    // with the class 'item' for each store
+    var listings = document.getElementById(id);
+    var listing = listings.appendChild(document.createElement('div'));
+    listing.className = 'item ' + id;
+    listing.id = 'listing-' + i;
+
+    // Create a new link with the class 'title' for each store
+    // and fill it with the store address
+    var link = listing.appendChild(document.createElement('a'));
+    link.href = '#';
+    link.className = 'title';
+    link.dataPosition = i;
+    if(id == 'tweets'){
+      link.innerHTML = "tweet" + parseInt(i+1);
+    }
+    else{
+      link.innerHTML = currentFeature.name;
+    }
+
+    // Create a new div with the class 'details' for each store
+    // and fill it with the city and phone number
+    var details = listing.appendChild(document.createElement('div'));
+    if(currentFeature.date){  
+      details.innerHTML = currentFeature.date;
+    }
+    else{
+      details.innerHTML = currentFeature.address;
+    }
+    
+
+    // Add an event listener for the links in the sidebar listing
+    link.addEventListener('click', function(e) {
+      console.log(e);
+      // Update the currentFeature to the store associated with the clicked link
+      var clickedListing = data[this.dataPosition];
+      // 1. Fly to the point associated with the clicked link
+      flyToFacility(clickedListing);
+      // 2. Close all other popups and display popup for clicked store
+      createPopUp(clickedListing, id);
+      // 3. Highlight listing in sidebar (and remove highlight for all other listings)
+      var activeItem = document.getElementsByClassName('active');
+      if (activeItem[0]) {
+        activeItem[0].classList.remove('active');
+      }
+      this.parentNode.classList.add('active');
+    });
+
+
+  }
+}
+
+// fly map to location
+function flyToFacility(currentFeature) {
+  map.flyTo({
+    center: [currentFeature.long, currentFeature.lat],
+    zoom: 14
+  });
+}
+
+//  build a pop=up
+function createPopUp(currentFeature, id) {
+  d = currentFeature.properties;
+  var popUps = document.getElementsByClassName('mapboxgl-popup');
+  // Check if there is already a popup on the map and if so, remove it
+  if (popUps[0]) popUps[0].remove();
+
+  if(id == "tweets"){
+    var popup = new mapboxgl.Popup({ closeOnClick: true })
+      .setLngLat([currentFeature.long, currentFeature.lat])
+      .setHTML('<h3>' + currentFeature.tweet + '</h3>' +
+        '<h4>piblished: ' + currentFeature.date + '</h4>')
+      .addTo(map);
+  }
+  else {
+    var popup = new mapboxgl.Popup({ closeOnClick: true })
+      .setLngLat([currentFeature.long, currentFeature.lat])
+      .setHTML('<h3>' + currentFeature.name + '</h3>' +
+        '<h4>address: ' + currentFeature.address + '</h4>' +
+        '<h4>phone: ' + currentFeature.phone + '</h4>')
+      .addTo(map);
+  }
+}
+
+</script>
+
+</body>
+
+</html>

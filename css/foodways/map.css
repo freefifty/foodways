@@ -1,0 +1,138 @@
+body {
+  color: #404040;
+  font: 400 15px/22px 'Source Sans Pro', 'Helvetica Neue', Sans-serif;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+f
+h1 {
+  font-size: 22px;
+  margin: 0;
+  font-weight: 400;
+  line-height: 20px;
+  padding: 20px 2px;
+}
+
+a {
+  color: #404040;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #101010;
+}
+
+.sidebar {
+  position: absolute;
+  width: 33.3333%;
+  height: 49%;
+  left: 0;
+  overflow: scroll;
+  border-right: 1px solid rgba(0, 0, 0, 0.25);
+}
+
+#tweet_sidebar {
+  top: 50%;
+}
+
+#restaurant_sidebar {
+  top: inherit;
+}
+
+.pad2 {
+  padding: 20px;
+}
+
+.map {
+  position: absolute;
+  left: 33.3333%;
+  width: 66.6666%;
+  top: 0;
+  bottom: 0;
+}
+
+.heading {
+  background: #fff;
+  border-bottom: 1px solid #eee;
+  height: 60px;
+  line-height: 60px;
+  padding: 0 10px;
+}
+
+.listings {
+  height: 50%;
+  /*overflow: auto;*/
+  padding-bottom: 60px;
+}
+
+.listings .item {
+  display: block;
+  border-bottom: 1px solid #eee;
+  padding: 10px;
+  text-decoration: none;
+}
+
+.listings .item:last-child { border-bottom: none; }
+
+.listings .item .title {
+  display: block;
+  font-weight: 700;
+}
+
+/* TWEET TITLE COLOURS*/
+.tweets .title {
+  color: #4E2BCC;
+}
+
+.listings .tweets.active .title,
+.listings .tweets .title:hover { color: #4099FF; }
+
+/* RESTAURANT TITLE COLOURS*/
+.restaurants .title {
+  color: ##dd0a2f;
+}
+
+.listings .restaurants.active .title,
+.listings .restaurants .title:hover { color: ##f52549; }
+
+
+.listings .item .title small { font-weight: 400; }
+
+
+.listings .item.active {
+  background-color: #f8f8f8;
+}
+
+::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+  border-left: 0;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar-track {
+  background: none;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #00853e;
+  border-radius: 0;
+}
+
+.clearfix { display: block; }
+
+.clearfix::after {
+  content: '.';
+  display: block;
+  height: 0;
+  clear: both;
+  visibility: hidden;
+}
+
